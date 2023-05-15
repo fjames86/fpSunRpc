@@ -19,14 +19,21 @@ type
   function DecodeI32(xdr : PXdr; var x : int32) : boolean;
   function EncodeI64(xdr : PXdr; x : int64) : boolean;
   function DecodeI64(xdr : PXdr; var x : int64) : boolean;
+  function EncodeU32(xdr : PXdr; x : uint32) : boolean;
+  function DecodeU32(xdr : PXdr; var x : uint32) : boolean;
+  function EncodeU64(xdr : PXdr; x : uint64) : boolean;
+  function DecodeU64(xdr : PXdr; var x : uint64) : boolean;
   function EncodeBoolean(xdr : PXdr; x : boolean) : boolean;
   function DecodeBoolean(xdr : PXdr; var x : boolean) : boolean;
   function EncodeString(xdr : PXdr; x : string) : boolean;
   function DecodeString(xdr : PXdr; x : pchar; var len : integer) : boolean;
   function EncodeFixed(xdr : PXdr; x : array of uint8; count : integer) : boolean;
   function DecodeFixed(xdr : PXdr; x : array of uint8; count : integer) : boolean;
+  function DecodeFixed(xdr : PXdr; x : array of uint8; count : uint32) : boolean;
   function EncodeOpaque(xdr : PXdr; x : array of uint8; count : integer) : boolean;
   function DecodeOpaque(xdr : PXdr; x : array of uint8; var count : integer) : boolean;
+  function DecodeOpaque(xdr : PXdr; x : array of uint8; var count : uint32) : boolean;
+  procedure ResetXdr(xdr : PXdr);
 
 implementation
 
@@ -64,6 +71,25 @@ begin
        Result := false;
 end;
 
+function EncodeU32(xdr : PXdr; x : uint32) : boolean;
+begin
+       Result := EncodeI32(xdr, int32(x));
+end;
+
+function DecodeU32(xdr : PXdr; var x : uint32) : boolean;
+begin
+       Result := EncodeI32(xdr, uint32(x));
+end;
+
+function EncodeU64(xdr : PXdr; x : uint64) : boolean;
+begin
+       Result := EncodeI32(xdr, uint64(x));
+end;
+
+function DecodeU64(xdr : PXdr; var x : uint64) : boolean;
+begin
+       Result := EncodeI32(xdr, uint64(x));
+end;
 
 function EncodeI64(xdr : PXdr; x : int64) : boolean;
     var sts : boolean;
@@ -163,7 +189,10 @@ begin
      xdr^.offset := xdr^.offset + count;
      Result := false;
 end;
-
+function DecodeFixed(xdr : PXdr; x : array of uint8; count : uint32) : boolean;
+begin
+      Result := DecodeFixed(xdr, x, integer(count));
+end;
 
 function EncodeOpaque(xdr : PXdr; x : array of uint8; count : integer) : boolean;
     var sts : boolean;
@@ -181,6 +210,16 @@ begin
     if sts then exit(sts);
 
     Result := DecodeFixed(xdr, x, count);
+end;
+function DecodeOpaque(xdr : PXdr; x : array of uint8; var count : uint32) : boolean;
+begin
+    Result := DecodeOpaque(xdr, x, integer(count));
+end;
+
+procedure ResetXdr(xdr : PXdr);
+begin
+    xdr^.offset := 0;
+    xdr^.count := high(xdr^.buf);
 end;
 
 end.
